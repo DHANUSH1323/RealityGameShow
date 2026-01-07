@@ -16,9 +16,9 @@ public class GameEngine {
         this.gameState = gameState;
     }
 
-    //----------------------------------
+    //---------------------------------
     //Round 1 Methods
-    //----------------------------------
+    //---------------------------------
 
     public void startRound1(Question question) {
         if(gameState.getGame().getPhase() != GamePhase.TEAM_FORMATION){
