@@ -95,4 +95,69 @@ public class GameEngine {
         gameState.setCurrentQuestion(null);
         attemptedTeams.clear();
     }
+
+    //---------------------------------
+    //Round 2 Methods
+    //---------------------------------
+
+
+    public void startRound2(){
+        if(gameState.getGame().getPhase() != GamePhase.ROUND1){
+            throw new IllegalStateException("Cannot start Round 2 now" );
+        }
+
+        gameState.getGame().setPhase(GamePhase.ROUND2);
+        gameState.getGame().setCurrentRound(2);
+
+        gameState.setRound2TeamIndex(0);
+        startNextRound2Team();
+    }
+
+
+    public void startNextRound2Team(){
+        if(gameState.getRound2TeamIndex() >= gameState.getTeams().size()){
+            endRound2();
+            return;
+        }
+
+        String teamId = gameState.getTeams().keySet().stream().toList().get(gameState.getRound2TeamIndex());
+        
+        gameState.setActiveTeamId(teamId);
+        gameState.setRound2TurnStartTime(System.currentTimeMillis());
+    }
+
+    public synchronized void submitRound2Answer(String teamId, boolean isCorrect, int points) {
+        if (gameState.getGame().getPhase() != GamePhase.ROUND2) {
+            return;
+        }
+    
+        if (!teamId.equals(gameState.getActiveTeamId())) {
+            return;
+        }
+    
+        long elapsed =
+                System.currentTimeMillis() - gameState.getRound2TurnStartTime();
+    
+        //Time Over
+        if (elapsed > 60_000) {
+            endCurrentRound2Turn();
+            return;
+        }
+    
+        if (isCorrect) {
+            Team team = gameState.getTeams().get(teamId);
+            team.setScore(team.getScore() + points);
+        }
+    }
+
+    public void endCurrentRound2Turn() {
+        gameState.setActiveTeamId(null);
+        gameState.setRound2TeamIndex(gameState.getRound2TeamIndex() + 1);
+        startNextRound2Team();
+    }
+
+    private void endRound2() {
+        gameState.setActiveTeamId(null);
+        gameState.getGame().setPhase(GamePhase.ROUND3);
+    }
 }
