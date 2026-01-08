@@ -16,7 +16,7 @@ class GameEngineRound1Test {
         Game game = new Game("game-1");
         gameState = new GameState(game);
 
-        // Add 3 teams
+        //Adding 3 teams
         gameState.addTeam(new Team("T1", "Alpha", 3));
         gameState.addTeam(new Team("T2", "Beta", 2));
         gameState.addTeam(new Team("T3", "Gamma", 4));
