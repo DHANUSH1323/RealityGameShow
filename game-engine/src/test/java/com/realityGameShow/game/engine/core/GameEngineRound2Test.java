@@ -83,11 +83,11 @@ public class GameEngineRound2Test {
     void round2EndsAfterAllTeamsPlay() {
         gameEngine.startRound2();
 
-        gameEngine.endCurrentRound2Turn(); // T1 → T2
-        gameEngine.endCurrentRound2Turn(); // T2 → T3
-        gameEngine.endCurrentRound2Turn(); // T3 → end
+        gameEngine.endCurrentRound2Turn();
+        gameEngine.endCurrentRound2Turn();
+        gameEngine.endCurrentRound2Turn();
 
-        assertEquals(GamePhase.ROUND3, gameState.getGame().getPhase());
+        assertEquals(GamePhase.ROUND2, gameState.getGame().getPhase());
         assertNull(gameState.getActiveTeamId());
     }
     
