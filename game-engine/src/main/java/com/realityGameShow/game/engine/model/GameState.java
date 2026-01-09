@@ -22,6 +22,10 @@ public class GameState {
     private long round2TurnStartTime;
     private int round2TeamIndex; // index of the team whose next turn in round 2
 
+    // Round 3 fields (Risk & Reward)
+    private int round3QuestionIndex;
+    private long round3QuestionStartTime;
+
     public GameState(Game game) {
         this.game = game;
     }
@@ -84,5 +88,21 @@ public class GameState {
     
     public void setRound2TeamIndex(int round2TeamIndex) {
         this.round2TeamIndex = round2TeamIndex;
+    }
+
+    public int getRound3QuestionIndex() {
+        return round3QuestionIndex;
+    }
+
+    public void setRound3QuestionIndex(int round3QuestionIndex) {
+        this.round3QuestionIndex = round3QuestionIndex;
+    }
+
+    public long getRound3QuestionStartTime() {
+        return round3QuestionStartTime;
+    }
+
+    public void setRound3QuestionStartTime(long round3QuestionStartTime) {
+        this.round3QuestionStartTime = round3QuestionStartTime;
     }
 }

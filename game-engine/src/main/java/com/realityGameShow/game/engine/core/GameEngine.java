@@ -158,6 +158,93 @@ public class GameEngine {
 
     private void endRound2() {
         gameState.setActiveTeamId(null);
+    }
+
+    
+    //---------------------------------
+    //Round 3 Methods
+    //---------------------------------
+
+
+    public void startRound3(){
+        if(gameState.getGame().getPhase() != GamePhase.ROUND2){
+            throw new IllegalStateException("Cannot start round 3 now" );
+        }
+
         gameState.getGame().setPhase(GamePhase.ROUND3);
+        gameState.getGame().setCurrentRound(3);
+
+        gameState.setRound2TeamIndex(0);
+        startNextRound3Team();
+    }
+
+    private void startNextRound3Team() {
+        if (gameState.getRound2TeamIndex() >= gameState.getTeams().size()) {
+            endGame();
+            return;
+        }
+    
+        String teamId = gameState.getTeams().keySet().stream().toList().get(gameState.getRound2TeamIndex());
+    
+        gameState.setActiveTeamId(teamId);
+        gameState.setRound3QuestionIndex(0);
+        gameState.setRound3QuestionStartTime(System.currentTimeMillis());
+    }
+
+    public synchronized void submitRound3Answer(String teamId, boolean isCorrect) {
+        if (gameState.getGame().getPhase() != GamePhase.ROUND3) {
+            return;
+        }
+    
+        if (!teamId.equals(gameState.getActiveTeamId())) {
+            return;
+        }
+    
+        long elapsed =
+                System.currentTimeMillis() - gameState.getRound3QuestionStartTime();
+    
+        // Timeout current team loses chance
+        if (elapsed > 30_000) {
+            endCurrentRound3Team();
+            return;
+        }
+    
+        int questionIndex = gameState.getRound3QuestionIndex();
+        int points = (questionIndex + 1) * 10;
+    
+        Team team = gameState.getTeams().get(teamId);
+    
+        if (!isCorrect) {
+            endCurrentRound3Team();
+            return;
+        }
+    
+        // Correct answer
+        team.setScore(team.getScore() + points);
+    
+        // Move to next question
+        gameState.setRound3QuestionIndex(questionIndex + 1);
+    
+        // All 5 answered correctly
+        if (gameState.getRound3QuestionIndex() == 5) {
+            team.setScore(team.getScore() + 50); // bonus
+            endCurrentRound3Team();
+            return;
+        }
+    
+        gameState.setRound3QuestionStartTime(System.currentTimeMillis());
+    }
+
+    private void endCurrentRound3Team() {
+        gameState.setActiveTeamId(null);
+        gameState.setRound2TeamIndex(
+                gameState.getRound2TeamIndex() + 1
+        );
+        startNextRound3Team();
+    }
+
+    private void endGame() {
+        gameState.setActiveTeamId(null);
+        gameState.getGame().setPhase(GamePhase.GAME_OVER);
     }
 }
