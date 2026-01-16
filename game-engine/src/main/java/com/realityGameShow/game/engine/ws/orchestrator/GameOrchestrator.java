@@ -37,11 +37,20 @@ public class GameOrchestrator {
     public void handleEvent(GameEvent event, WebSocketSession session) {
 
         if (!isPhaseAllowed(event)) {
+            sendError(session, "INVALID_PHASE", "Action not allowed in current game phase");
+            return;
+        }
+        
+        if (!isSenderAllowed(event)) {
+            sendError(session, "UNAUTHORIZED_ACTION", "Sender not allowed to perform this action");
             return;
         }
 
-        if (!isSenderAllowed(event)) {
-            return;
+        if (event.getEventType().name().startsWith("SUBMIT_ANSWER")) {
+            if (!event.getSenderId().equals(gameState.getActiveTeamId())) {
+                sendError(session, "NOT_ACTIVE_TEAM", "It is not your turn");
+                return;
+            }
         }
 
         boolean stateChanged = false;
@@ -186,6 +195,26 @@ public class GameOrchestrator {
                 if (session.isOpen()) {
                     session.sendMessage(new TextMessage(payload));
                 }
+            }
+        } catch (Exception e) {
+            // logging later
+        }
+    }
+
+    // ----------------------------
+    // Error handling
+    // ----------------------------
+
+    private void sendError(WebSocketSession session, String code, String message) {
+        try {
+            ErrorEvent error =
+                    new ErrorEvent(code, message);
+
+            String payload =
+                    objectMapper.writeValueAsString(error);
+
+            if (session.isOpen()) {
+                session.sendMessage(new TextMessage(payload));
             }
         } catch (Exception e) {
             // logging later
