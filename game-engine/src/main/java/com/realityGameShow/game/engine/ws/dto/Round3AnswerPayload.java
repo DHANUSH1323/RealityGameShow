@@ -2,11 +2,11 @@ package com.realityGameShow.game.engine.ws.dto;
 
 public class Round3AnswerPayload {
 
-    private boolean correct;
+    private String answer;
 
     public Round3AnswerPayload() {}
 
-    public boolean isCorrect() {
-        return correct;
+    public String getAnswer() {
+        return answer;
     }
 }
