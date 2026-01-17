@@ -1,5 +1,6 @@
 package com.realityGameShow.game.engine.core;
 
+import com.realityGameShow.game.engine.ai.AIHost;
 import com.realityGameShow.game.engine.model.*;
 
 import java.util.HashSet;
@@ -8,12 +9,14 @@ import java.util.Set;
 public class GameEngine {
 
     private final GameState gameState;
+    private final AIHost aiHost;
 
     // Round 1 tracking
     private final Set<String> attemptedTeams = new HashSet<>();
 
-    public GameEngine(GameState gameState) {
+    public GameEngine(GameState gameState, AIHost aiHost) {
         this.gameState = gameState;
+        this.aiHost = aiHost;
     }
 
     //---------------------------------
@@ -124,6 +127,10 @@ public class GameEngine {
         
         gameState.setActiveTeamId(teamId);
         gameState.setRound2TurnStartTime(System.currentTimeMillis());
+        
+        // Generate a new question for this team's turn
+        Question question = aiHost.generateQuestion(2);
+        gameState.setCurrentQuestion(question);
     }
 
     public synchronized void submitRound2Answer(String teamId, boolean isCorrect, int points) {
@@ -147,11 +154,17 @@ public class GameEngine {
         if (isCorrect) {
             Team team = gameState.getTeams().get(teamId);
             team.setScore(team.getScore() + points);
+            
+            // Generate a new question for the next answer (teams can answer multiple questions)
+            Question nextQuestion = aiHost.generateQuestion(2);
+            gameState.setCurrentQuestion(nextQuestion);
         }
+        // If wrong answer, keep the same question so they can try again (if time permits)
     }
 
     public void endCurrentRound2Turn() {
         gameState.setActiveTeamId(null);
+        gameState.setCurrentQuestion(null);
         gameState.setRound2TeamIndex(gameState.getRound2TeamIndex() + 1);
         startNextRound2Team();
     }
@@ -189,6 +202,10 @@ public class GameEngine {
         gameState.setActiveTeamId(teamId);
         gameState.setRound3QuestionIndex(0);
         gameState.setRound3QuestionStartTime(System.currentTimeMillis());
+        
+        // Generate the first question for this team
+        Question question = aiHost.generateQuestion(3);
+        gameState.setCurrentQuestion(question);
     }
 
     public synchronized void submitRound3Answer(String teamId, boolean isCorrect) {
@@ -232,11 +249,15 @@ public class GameEngine {
             return;
         }
     
+        // Generate the next question for this team
+        Question nextQuestion = aiHost.generateQuestion(3);
+        gameState.setCurrentQuestion(nextQuestion);
         gameState.setRound3QuestionStartTime(System.currentTimeMillis());
     }
 
     private void endCurrentRound3Team() {
         gameState.setActiveTeamId(null);
+        gameState.setCurrentQuestion(null);
         gameState.setRound2TeamIndex(
                 gameState.getRound2TeamIndex() + 1
         );
