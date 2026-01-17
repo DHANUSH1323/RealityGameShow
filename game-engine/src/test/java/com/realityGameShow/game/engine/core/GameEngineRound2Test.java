@@ -1,5 +1,6 @@
 package com.realityGameShow.game.engine.core;
 
+import com.realityGameShow.game.engine.ai.AIHost;
 import com.realityGameShow.game.engine.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ public class GameEngineRound2Test {
 
     private GameEngine gameEngine;
     private GameState gameState;
+    private AIHost aiHost;
 
     @BeforeEach
     void setup(){
@@ -21,7 +23,20 @@ public class GameEngineRound2Test {
         gameState.addTeam(new Team("T2", "Beta", 2));
         gameState.addTeam(new Team("T3", "Gamma", 4));
 
-        gameEngine = new GameEngine(gameState);
+        // Create a simple test AIHost
+        aiHost = new AIHost() {
+            @Override
+            public Question generateQuestion(int round) {
+                return new Question("Round 2 Test Question", "Test Answer", 5);
+            }
+
+            @Override
+            public boolean validateAnswer(Question question, String answer) {
+                return question.getCorrectAnswer().equalsIgnoreCase(answer.trim());
+            }
+        };
+
+        gameEngine = new GameEngine(gameState, aiHost);
 
         game.setPhase(GamePhase.ROUND1);
     }
@@ -33,6 +48,7 @@ public class GameEngineRound2Test {
         assertEquals(GamePhase.ROUND2, gameState.getGame().getPhase());
         assertEquals(2, gameState.getGame().getCurrentRound());
         assertEquals("T1", gameState.getActiveTeamId());
+        assertNotNull(gameState.getCurrentQuestion(), "Question should be generated when Round 2 starts");
     }
 
     @Test
@@ -44,8 +60,12 @@ public class GameEngineRound2Test {
         assertEquals(0, gameState.getTeams().get("T2").getScore());
         
         //Active team scores
+        Question firstQuestion = gameState.getCurrentQuestion();
         gameEngine.submitRound2Answer("T1", true, 10);
         assertEquals(10, gameState.getTeams().get("T1").getScore());
+        // After correct answer, a new question should be generated
+        assertNotNull(gameState.getCurrentQuestion(), "New question should be generated after correct answer");
+        assertNotSame(firstQuestion, gameState.getCurrentQuestion(), "Question should be different after correct answer");
     }
 
     @Test

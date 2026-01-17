@@ -1,5 +1,6 @@
 package com.realityGameShow.game.engine.core;
 
+import com.realityGameShow.game.engine.ai.AIHost;
 import com.realityGameShow.game.engine.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ class GameEngineRound1Test {
 
     private GameEngine gameEngine;
     private GameState gameState;
+    private AIHost aiHost;
 
     @BeforeEach
     void setup() {
@@ -21,12 +23,25 @@ class GameEngineRound1Test {
         gameState.addTeam(new Team("T2", "Beta", 2));
         gameState.addTeam(new Team("T3", "Gamma", 4));
 
-        gameEngine = new GameEngine(gameState);
+        // Create a simple test AIHost
+        aiHost = new AIHost() {
+            @Override
+            public Question generateQuestion(int round) {
+                return new Question("Test Question", "Test Answer", 10);
+            }
+
+            @Override
+            public boolean validateAnswer(Question question, String answer) {
+                return question.getCorrectAnswer().equalsIgnoreCase(answer.trim());
+            }
+        };
+
+        gameEngine = new GameEngine(gameState, aiHost);
     }
 
     @Test
     void firstBuzzerWins() {
-        Question q = new Question("Q1", "2+2?", "4", 10);
+        Question q = new Question("2+2?", "4", 10);
         gameEngine.startRound1(q);
 
         gameEngine.buzzerPress("T1");
@@ -38,7 +53,7 @@ class GameEngineRound1Test {
 
     @Test
     void wrongAnswerAllowsNextTeam() {
-        Question q = new Question("Q1", "2+2?", "4", 10);
+        Question q = new Question("2+2?", "4", 10);
         gameEngine.startRound1(q);
 
         gameEngine.buzzerPress("T1");
@@ -51,7 +66,7 @@ class GameEngineRound1Test {
 
     @Test
     void correctAnswerEndsQuestion() {
-        Question q = new Question("Q1", "2+2?", "4", 10);
+        Question q = new Question("2+2?", "4", 10);
         gameEngine.startRound1(q);
 
         gameEngine.buzzerPress("T2");
@@ -64,7 +79,7 @@ class GameEngineRound1Test {
 
     @Test
     void teamCannotBuzzTwiceForSameQuestion() {
-        Question q = new Question("Q1", "2+2?", "4", 10);
+        Question q = new Question("2+2?", "4", 10);
         gameEngine.startRound1(q);
 
         gameEngine.buzzerPress("T1");
@@ -78,7 +93,7 @@ class GameEngineRound1Test {
 
     @Test
     void allTeamsFailEndsQuestion() {
-        Question q = new Question("Q1", "2+2?", "4", 10);
+        Question q = new Question("2+2?", "4", 10);
         gameEngine.startRound1(q);
 
         gameEngine.buzzerPress("T1");
