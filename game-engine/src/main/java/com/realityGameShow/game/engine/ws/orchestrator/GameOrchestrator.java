@@ -1,9 +1,11 @@
 package com.realityGameShow.game.engine.ws.orchestrator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.realityGameShow.game.engine.ai.AIHost;
 import com.realityGameShow.game.engine.core.GameEngine;
 import com.realityGameShow.game.engine.model.GamePhase;
 import com.realityGameShow.game.engine.model.GameState;
+import com.realityGameShow.game.engine.model.Question;
 import com.realityGameShow.game.engine.ws.dto.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
@@ -20,6 +22,7 @@ public class GameOrchestrator {
     private final GameEngine gameEngine;
     private final GameState gameState;
     private final ObjectMapper objectMapper;
+    private final AIHost aiHost;
 
     private final Set<WebSocketSession> sessions =
             ConcurrentHashMap.newKeySet();
@@ -27,11 +30,13 @@ public class GameOrchestrator {
     public GameOrchestrator(
             GameEngine gameEngine,
             GameState gameState,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            AIHost aiHost
     ) {
         this.gameEngine = gameEngine;
         this.gameState = gameState;
         this.objectMapper = objectMapper;
+        this.aiHost = aiHost;
     }
 
     public void handleEvent(GameEvent event, WebSocketSession session) {
@@ -58,7 +63,8 @@ public class GameOrchestrator {
         switch (event.getEventType()) {
 
             case START_ROUND_1 -> {
-                gameEngine.startRound1(null);
+                Question q = aiHost.generateQuestion(1);
+                gameEngine.startRound1(q);
                 stateChanged = true;
             }
 
@@ -78,33 +84,26 @@ public class GameOrchestrator {
             }
 
             case SUBMIT_ANSWER_R1 -> {
-                Round1AnswerPayload p =
-                        (Round1AnswerPayload) event.getPayload();
-                gameEngine.submitAnswer(
-                        event.getSenderId(),
-                        p.isCorrect()
-                );
+                Round1AnswerPayload p = (Round1AnswerPayload) event.getPayload();
+            
+                boolean isCorrect = aiHost.validateAnswer(gameState.getCurrentQuestion(), p.getAnswer());
+                gameEngine.submitAnswer(event.getSenderId(), isCorrect);
                 stateChanged = true;
             }
 
             case SUBMIT_ANSWER_R2 -> {
-                Round2AnswerPayload p =
-                        (Round2AnswerPayload) event.getPayload();
-                gameEngine.submitRound2Answer(
-                        event.getSenderId(),
-                        p.isCorrect(),
-                        p.getPoints()
-                );
+                Round2AnswerPayload p = (Round2AnswerPayload) event.getPayload();
+            
+                boolean isCorrect = aiHost.validateAnswer(gameState.getCurrentQuestion(), p.getAnswer());
+                gameEngine.submitRound2Answer(event.getSenderId(), isCorrect, p.getPoints());
                 stateChanged = true;
             }
 
             case SUBMIT_ANSWER_R3 -> {
-                Round3AnswerPayload p =
-                        (Round3AnswerPayload) event.getPayload();
-                gameEngine.submitRound3Answer(
-                        event.getSenderId(),
-                        p.isCorrect()
-                );
+                Round3AnswerPayload p = (Round3AnswerPayload) event.getPayload();
+            
+                boolean isCorrect = aiHost.validateAnswer(gameState.getCurrentQuestion(), p.getAnswer());
+                gameEngine.submitRound3Answer(event.getSenderId(), isCorrect);
                 stateChanged = true;
             }
 
