@@ -25,6 +25,10 @@ public class GameState {
     // Round 3 fields (Risk & Reward)
     private int round3QuestionIndex;
     private long round3QuestionStartTime;
+    
+    // Category selection fields
+    private String pendingCategoryRound; // "1" or "3" if waiting for category selection, null otherwise
+    private String selectedCategory; // Selected category for the current round
 
     public GameState(Game game) {
         this.game = game;
@@ -104,5 +108,21 @@ public class GameState {
 
     public void setRound3QuestionStartTime(long round3QuestionStartTime) {
         this.round3QuestionStartTime = round3QuestionStartTime;
+    }
+
+    public String getPendingCategoryRound() {
+        return pendingCategoryRound;
+    }
+
+    public void setPendingCategoryRound(String pendingCategoryRound) {
+        this.pendingCategoryRound = pendingCategoryRound;
+    }
+
+    public String getSelectedCategory() {
+        return selectedCategory;
+    }
+
+    public void setSelectedCategory(String selectedCategory) {
+        this.selectedCategory = selectedCategory;
     }
 }

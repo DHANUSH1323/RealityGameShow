@@ -63,7 +63,17 @@ public class GameOrchestrator {
         switch (event.getEventType()) {
 
             case START_ROUND_1 -> {
-                Question q = aiHost.generateQuestion(1);
+                // Request category selection for Round 1
+                gameState.setPendingCategoryRound("1");
+                sendCategories(session, 1);
+                stateChanged = false; // Don't change game state yet, waiting for category
+            }
+
+            case SELECT_CATEGORY_R1 -> {
+                CategorySelectionPayload p = (CategorySelectionPayload) event.getPayload();
+                gameState.setSelectedCategory(p.getCategory());
+                gameState.setPendingCategoryRound(null);
+                Question q = aiHost.generateQuestion(1, p.getCategory());
                 gameEngine.startRound1(q);
                 stateChanged = true;
             }
@@ -74,7 +84,18 @@ public class GameOrchestrator {
             }
 
             case START_ROUND_3 -> {
+                // Request category selection for Round 3
+                gameState.setPendingCategoryRound("3");
+                sendCategories(session, 3);
+                stateChanged = false; // Don't change game state yet, waiting for category
+            }
+
+            case SELECT_CATEGORY_R3 -> {
+                CategorySelectionPayload p = (CategorySelectionPayload) event.getPayload();
+                gameState.setSelectedCategory(p.getCategory());
+                gameState.setPendingCategoryRound(null);
                 gameEngine.startRound3();
+                // Question generation happens in startRound3 -> startNextRound3Team
                 stateChanged = true;
             }
 
@@ -125,11 +146,11 @@ public class GameOrchestrator {
         GamePhase phase = gameState.getGame().getPhase();
 
         return switch (event.getEventType()) {
-            case START_ROUND_1 -> phase == GamePhase.TEAM_FORMATION;
+            case START_ROUND_1, SELECT_CATEGORY_R1 -> phase == GamePhase.TEAM_FORMATION;
             case BUZZ, SUBMIT_ANSWER_R1 -> phase == GamePhase.ROUND1;
             case START_ROUND_2 -> phase == GamePhase.ROUND1;
             case SUBMIT_ANSWER_R2 -> phase == GamePhase.ROUND2;
-            case START_ROUND_3 -> phase == GamePhase.ROUND2;
+            case START_ROUND_3, SELECT_CATEGORY_R3 -> phase == GamePhase.ROUND2;
             case SUBMIT_ANSWER_R3 -> phase == GamePhase.ROUND3;
             default -> false;
         };
@@ -142,7 +163,9 @@ public class GameOrchestrator {
         return switch (event.getEventType()) {
             case START_ROUND_1,
                  START_ROUND_2,
-                 START_ROUND_3 -> !isTeam;
+                 START_ROUND_3,
+                 SELECT_CATEGORY_R1,
+                 SELECT_CATEGORY_R3 -> !isTeam;
 
             case BUZZ,
                  SUBMIT_ANSWER_R1,
@@ -217,6 +240,36 @@ public class GameOrchestrator {
             }
         } catch (Exception e) {
             // logging later
+        }
+    }
+
+    private void sendCategories(WebSocketSession session, int round) {
+        try {
+            java.util.List<String> categories = aiHost.getAvailableCategories(round);
+            
+            CategoriesResponseEvent categoriesEvent =
+                    new CategoriesResponseEvent(
+                            gameState.getGame().getGameId(),
+                            round,
+                            categories
+                    );
+
+            String payload = objectMapper.writeValueAsString(categoriesEvent);
+
+            // Send to the requesting session
+            if (session.isOpen()) {
+                session.sendMessage(new TextMessage(payload));
+            }
+            
+            // Also broadcast to all sessions so everyone sees available categories
+            for (WebSocketSession s : sessions) {
+                if (s.isOpen() && !s.equals(session)) {
+                    s.sendMessage(new TextMessage(payload));
+                }
+            }
+        } catch (Exception e) {
+            // logging later
+            sendError(session, "ERROR", "Failed to retrieve categories");
         }
     }
 }

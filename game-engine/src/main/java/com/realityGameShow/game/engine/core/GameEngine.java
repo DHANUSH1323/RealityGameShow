@@ -203,8 +203,9 @@ public class GameEngine {
         gameState.setRound3QuestionIndex(0);
         gameState.setRound3QuestionStartTime(System.currentTimeMillis());
         
-        // Generate the first question for this team
-        Question question = aiHost.generateQuestion(3);
+        // Generate the first question for this team using selected category
+        String category = gameState.getSelectedCategory();
+        Question question = aiHost.generateQuestion(3, category);
         gameState.setCurrentQuestion(question);
     }
 
@@ -249,8 +250,9 @@ public class GameEngine {
             return;
         }
     
-        // Generate the next question for this team
-        Question nextQuestion = aiHost.generateQuestion(3);
+        // Generate the next question for this team using selected category
+        String category = gameState.getSelectedCategory();
+        Question nextQuestion = aiHost.generateQuestion(3, category);
         gameState.setCurrentQuestion(nextQuestion);
         gameState.setRound3QuestionStartTime(System.currentTimeMillis());
     }
