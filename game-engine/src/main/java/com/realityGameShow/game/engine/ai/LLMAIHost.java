@@ -40,13 +40,13 @@ public class LLMAIHost implements AIHost {
 
     @Override
     public List<String> getAvailableCategories(int round) {
-        if (round == 1 || round == 3) {
-            String prompt = "Generate a list of 8 trivia question categories suitable for a game show. " +
-                    "Return only a JSON array of category names, like: [\"Science\", \"History\", \"Geography\", ...]";
-            String response = geminiService.generateContentSync(prompt);
-            return parseCategoriesFromResponse(response);
-        }
-        return List.of(); // Round 2 doesn't use categories
+        // All rounds now use the same 4 fixed categories
+        return Arrays.asList(
+                "General Knowledge",
+                "Science and Tech",
+                "Entertainment and Pop Culture",
+                "Sport and Games"
+        );
     }
 
     @Override
@@ -90,6 +90,8 @@ public class LLMAIHost implements AIHost {
 
     /**
      * Parses categories from Gemini response.
+     * NOTE: This method is now unused since we use fixed categories,
+     * but kept for potential future use.
      */
     private List<String> parseCategoriesFromResponse(String response) {
         try {
@@ -121,19 +123,13 @@ public class LLMAIHost implements AIHost {
             
             // Fallback if parsing fails
             if (result.isEmpty()) {
-                return Arrays.asList(
-                        "Science", "History", "Geography", "Sports", 
-                        "Entertainment", "Technology", "Literature", "General Knowledge"
-                );
+                return getAvailableCategories(1); // Use fixed categories as fallback
             }
             
             return result;
         } catch (Exception e) {
-            // Fallback to default categories
-            return Arrays.asList(
-                    "Science", "History", "Geography", "Sports", 
-                    "Entertainment", "Technology", "Literature", "General Knowledge"
-            );
+            // Fallback to fixed categories
+            return getAvailableCategories(1);
         }
     }
 

@@ -9,8 +9,10 @@ public enum GameEventType {
     
     // Category selection
     REQUEST_CATEGORY_R1,
+    REQUEST_CATEGORY_R2,
     REQUEST_CATEGORY_R3,
     SELECT_CATEGORY_R1,
+    SELECT_CATEGORY_R2,
     SELECT_CATEGORY_R3,
 
     // Round 1

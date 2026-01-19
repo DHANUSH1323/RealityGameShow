@@ -79,6 +79,16 @@ public class GameOrchestrator {
             }
 
             case START_ROUND_2 -> {
+                // Request category selection for Round 2
+                gameState.setPendingCategoryRound("2");
+                sendCategories(session, 2);
+                stateChanged = false; // Don't change game state yet, waiting for category
+            }
+
+            case SELECT_CATEGORY_R2 -> {
+                CategorySelectionPayload p = (CategorySelectionPayload) event.getPayload();
+                gameState.setSelectedCategory(p.getCategory());
+                gameState.setPendingCategoryRound(null);
                 gameEngine.startRound2();
                 stateChanged = true;
             }
@@ -115,8 +125,10 @@ public class GameOrchestrator {
             case SUBMIT_ANSWER_R2 -> {
                 Round2AnswerPayload p = (Round2AnswerPayload) event.getPayload();
             
+                // AI validates the answer automatically
                 boolean isCorrect = aiHost.validateAnswer(gameState.getCurrentQuestion(), p.getAnswer());
-                gameEngine.submitRound2Answer(event.getSenderId(), isCorrect, p.getPoints());
+                // Points are calculated automatically by GameEngine based on question's point value
+                gameEngine.submitRound2Answer(event.getSenderId(), isCorrect);
                 stateChanged = true;
             }
 
@@ -148,7 +160,7 @@ public class GameOrchestrator {
         return switch (event.getEventType()) {
             case START_ROUND_1, SELECT_CATEGORY_R1 -> phase == GamePhase.TEAM_FORMATION;
             case BUZZ, SUBMIT_ANSWER_R1 -> phase == GamePhase.ROUND1;
-            case START_ROUND_2 -> phase == GamePhase.ROUND1;
+            case START_ROUND_2, SELECT_CATEGORY_R2 -> phase == GamePhase.ROUND1;
             case SUBMIT_ANSWER_R2 -> phase == GamePhase.ROUND2;
             case START_ROUND_3, SELECT_CATEGORY_R3 -> phase == GamePhase.ROUND2;
             case SUBMIT_ANSWER_R3 -> phase == GamePhase.ROUND3;
@@ -165,6 +177,7 @@ public class GameOrchestrator {
                  START_ROUND_2,
                  START_ROUND_3,
                  SELECT_CATEGORY_R1,
+                 SELECT_CATEGORY_R2,
                  SELECT_CATEGORY_R3 -> !isTeam;
 
             case BUZZ,

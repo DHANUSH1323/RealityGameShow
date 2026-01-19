@@ -128,12 +128,13 @@ public class GameEngine {
         gameState.setActiveTeamId(teamId);
         gameState.setRound2TurnStartTime(System.currentTimeMillis());
         
-        // Generate a new question for this team's turn
-        Question question = aiHost.generateQuestion(2);
+        // Generate a new question for this team's turn using selected category
+        String category = gameState.getSelectedCategory();
+        Question question = aiHost.generateQuestion(2, category);
         gameState.setCurrentQuestion(question);
     }
 
-    public synchronized void submitRound2Answer(String teamId, boolean isCorrect, int points) {
+    public synchronized void submitRound2Answer(String teamId, boolean isCorrect) {
         if (gameState.getGame().getPhase() != GamePhase.ROUND2) {
             return;
         }
@@ -153,10 +154,13 @@ public class GameEngine {
     
         if (isCorrect) {
             Team team = gameState.getTeams().get(teamId);
+            // Points are automatically calculated based on the question's points value
+            int points = gameState.getCurrentQuestion().getPoints();
             team.setScore(team.getScore() + points);
             
             // Generate a new question for the next answer (teams can answer multiple questions)
-            Question nextQuestion = aiHost.generateQuestion(2);
+            String category = gameState.getSelectedCategory();
+            Question nextQuestion = aiHost.generateQuestion(2, category);
             gameState.setCurrentQuestion(nextQuestion);
         }
         // If wrong answer, keep the same question so they can try again (if time permits)

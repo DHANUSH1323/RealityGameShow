@@ -3,7 +3,6 @@ package com.realityGameShow.game.engine.ws.dto;
 public class Round2AnswerPayload {
 
     private String answer;
-    private int points;
 
     public Round2AnswerPayload() {}
 
@@ -11,7 +10,7 @@ public class Round2AnswerPayload {
         return answer;
     }
 
-    public int getPoints() {
-        return points;
+    public void setAnswer(String answer) {
+        this.answer = answer;
     }
 }

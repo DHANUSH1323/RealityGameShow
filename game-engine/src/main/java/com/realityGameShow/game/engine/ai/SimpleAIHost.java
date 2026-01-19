@@ -44,13 +44,13 @@ public class SimpleAIHost implements AIHost {
 
     @Override
     public List<String> getAvailableCategories(int round) {
-        if (round == 1 || round == 3) {
-            return Arrays.asList(
-                    "Science", "History", "Geography", "Sports", 
-                    "Entertainment", "Technology", "Literature", "General Knowledge"
-            );
-        }
-        return List.of(); // Round 2 doesn't use categories
+        // All rounds now use the same 4 fixed categories
+        return Arrays.asList(
+                "General Knowledge",
+                "Science and Tech",
+                "Entertainment and Pop Culture",
+                "Sport and Games"
+        );
     }
 
     @Override
