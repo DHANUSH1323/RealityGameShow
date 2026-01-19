@@ -1,5 +1,6 @@
 package com.realityGameShow.game.engine.ai.gemini;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -7,14 +8,16 @@ import reactor.core.publisher.Mono;
 @Service
 public class GeminiService {
 
-    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-    private static final String API_KEY = "AIzaSyD2RSjH71xR0HV9iW1QPpleiXktZ7JHBXI";
-
+    private final String apiKey;
     private final WebClient webClient;
 
-    public GeminiService() {
+    public GeminiService(
+            @Value("${ai.gemini.api-url}") String apiUrl,
+            @Value("${ai.gemini.api-key}") String apiKey
+    ) {
+        this.apiKey = apiKey;
         this.webClient = WebClient.builder()
-                .baseUrl(GEMINI_API_URL)
+                .baseUrl(apiUrl)
                 .build();
     }
 
@@ -23,7 +26,7 @@ public class GeminiService {
         
         return webClient.post()
                 .uri(uriBuilder -> uriBuilder
-                        .queryParam("key", API_KEY)
+                        .queryParam("key", apiKey)
                         .build())
                 .header("Content-Type", "application/json")
                 .bodyValue(request)
