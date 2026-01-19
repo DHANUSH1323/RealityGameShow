@@ -5,6 +5,10 @@ import com.realityGameShow.game.engine.model.Question;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * LLM-based AI Host implementation for generating questions and validating answers.
  * 
@@ -24,9 +28,25 @@ public class LLMAIHost implements AIHost {
 
     @Override
     public Question generateQuestion(int round) {
-        String prompt = buildQuestionPrompt(round);
+        return generateQuestion(round, null);
+    }
+
+    @Override
+    public Question generateQuestion(int round, String category) {
+        String prompt = buildQuestionPrompt(round, category);
         String response = geminiService.generateContentSync(prompt);
         return parseQuestionFromResponse(response, round);
+    }
+
+    @Override
+    public List<String> getAvailableCategories(int round) {
+        if (round == 1 || round == 3) {
+            String prompt = "Generate a list of 8 trivia question categories suitable for a game show. " +
+                    "Return only a JSON array of category names, like: [\"Science\", \"History\", \"Geography\", ...]";
+            String response = geminiService.generateContentSync(prompt);
+            return parseCategoriesFromResponse(response);
+        }
+        return List.of(); // Round 2 doesn't use categories
     }
 
     @Override
@@ -39,7 +59,7 @@ public class LLMAIHost implements AIHost {
     /**
      * Builds a prompt for generating questions.
      */
-    private String buildQuestionPrompt(int round) {
+    private String buildQuestionPrompt(int round, String category) {
         String difficulty = switch (round) {
             case 1 -> "easy to medium";
             case 2 -> "medium";
@@ -54,14 +74,67 @@ public class LLMAIHost implements AIHost {
             default -> 10;
         };
         
+        String categoryText = (category != null && !category.isEmpty()) 
+                ? String.format(" in the category of '%s'", category)
+                : "";
+        
         return String.format(
-            "Generate a trivia question for round %d of a game show. " +
+            "Generate a trivia question for round %d of a game show%s. " +
             "The question should be %s difficulty. " +
             "The question should be interesting and engaging. " +
             "Return your response in the following JSON format (no markdown, just JSON): " +
             "{\"question\": \"the question text\", \"answer\": \"the correct answer\", \"points\": %d}",
-            round, difficulty, points
+            round, categoryText, difficulty, points
         );
+    }
+
+    /**
+     * Parses categories from Gemini response.
+     */
+    private List<String> parseCategoriesFromResponse(String response) {
+        try {
+            // Extract JSON array from response
+            String json = extractJsonFromResponse(response);
+            
+            // Remove brackets and split by comma
+            json = json.trim();
+            if (json.startsWith("[")) {
+                json = json.substring(1);
+            }
+            if (json.endsWith("]")) {
+                json = json.substring(0, json.length() - 1);
+            }
+            
+            // Split by comma and clean up
+            String[] categories = json.split(",");
+            List<String> result = new ArrayList<>();
+            
+            for (String cat : categories) {
+                String cleaned = cat.trim()
+                        .replace("\"", "")
+                        .replace("'", "")
+                        .trim();
+                if (!cleaned.isEmpty()) {
+                    result.add(cleaned);
+                }
+            }
+            
+            // Fallback if parsing fails
+            if (result.isEmpty()) {
+                return Arrays.asList(
+                        "Science", "History", "Geography", "Sports", 
+                        "Entertainment", "Technology", "Literature", "General Knowledge"
+                );
+            }
+            
+            return result;
+        } catch (Exception e) {
+            // Fallback to default categories
+            return Arrays.asList(
+                    "Science", "History", "Geography", "Sports", 
+                    "Entertainment", "Technology", "Literature", "General Knowledge"
+            );
+        }
     }
 
     /**

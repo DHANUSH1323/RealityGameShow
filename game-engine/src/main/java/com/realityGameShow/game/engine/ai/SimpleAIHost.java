@@ -3,11 +3,19 @@ package com.realityGameShow.game.engine.ai;
 import com.realityGameShow.game.engine.model.Question;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Component
 public class SimpleAIHost implements AIHost {
 
     @Override
     public Question generateQuestion(int round) {
+        return generateQuestion(round, null);
+    }
+
+    @Override
+    public Question generateQuestion(int round, String category) {
 
         return switch (round) {
             case 1 -> new Question(
@@ -32,6 +40,17 @@ public class SimpleAIHost implements AIHost {
                     "Unsupported round"
             );
         };
+    }
+
+    @Override
+    public List<String> getAvailableCategories(int round) {
+        if (round == 1 || round == 3) {
+            return Arrays.asList(
+                    "Science", "History", "Geography", "Sports", 
+                    "Entertainment", "Technology", "Literature", "General Knowledge"
+            );
+        }
+        return List.of(); // Round 2 doesn't use categories
     }
 
     @Override
