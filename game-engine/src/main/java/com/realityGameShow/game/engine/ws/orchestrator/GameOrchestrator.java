@@ -3,9 +3,12 @@ package com.realityGameShow.game.engine.ws.orchestrator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.realityGameShow.game.engine.ai.AIHost;
 import com.realityGameShow.game.engine.core.GameEngine;
+import com.realityGameShow.game.engine.core.GameRegistry;
 import com.realityGameShow.game.engine.model.GamePhase;
 import com.realityGameShow.game.engine.model.GameState;
 import com.realityGameShow.game.engine.model.Question;
+import com.realityGameShow.game.engine.persistence.GameStateMapper;
+import com.realityGameShow.game.engine.persistence.GameStatePersistenceService;
 import com.realityGameShow.game.engine.ws.dto.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
@@ -20,33 +23,43 @@ import java.util.stream.Collectors;
 public class GameOrchestrator {
 
     private final GameEngine gameEngine;
-    private final GameState gameState;
+    // private final GameState gameState;
+    private final GameRegistry gameRegistry;
     private final ObjectMapper objectMapper;
     private final AIHost aiHost;
+    private final GameStatePersistenceService persistence;
 
     private final Set<WebSocketSession> sessions =
             ConcurrentHashMap.newKeySet();
 
-    public GameOrchestrator(
-            GameEngine gameEngine,
-            GameState gameState,
-            ObjectMapper objectMapper,
-            AIHost aiHost
-    ) {
-        this.gameEngine = gameEngine;
-        this.gameState = gameState;
-        this.objectMapper = objectMapper;
-        this.aiHost = aiHost;
-    }
+            public GameOrchestrator(
+                GameEngine gameEngine,
+                GameRegistry gameRegistry,
+                ObjectMapper objectMapper,
+                AIHost aiHost,
+                GameStatePersistenceService persistence
+        ) {
+            this.gameEngine = gameEngine;
+            this.gameRegistry = gameRegistry;
+            this.objectMapper = objectMapper;
+            this.aiHost = aiHost;
+            this.persistence = persistence;
+        }
 
     public void handleEvent(GameEvent event, WebSocketSession session) {
+        GameState gameState = gameRegistry.getGame(event.getGameId());
 
-        if (!isPhaseAllowed(event)) {
+        if (gameState == null) {
+            sendError(session, "GAME_NOT_FOUND", "Invalid gameId");
+            return;
+        }
+
+        if (!isPhaseAllowed(event, gameState)) {
             sendError(session, "INVALID_PHASE", "Action not allowed in current game phase");
             return;
         }
         
-        if (!isSenderAllowed(event)) {
+        if (!isSenderAllowed(event, gameState)) {
             sendError(session, "UNAUTHORIZED_ACTION", "Sender not allowed to perform this action");
             return;
         }
@@ -65,7 +78,7 @@ public class GameOrchestrator {
             case START_ROUND_1 -> {
                 // Request category selection for Round 1
                 gameState.setPendingCategoryRound("1");
-                sendCategories(session, 1);
+                sendCategories(session, 1, gameState);
                 stateChanged = false; // Don't change game state yet, waiting for category
             }
 
@@ -81,7 +94,7 @@ public class GameOrchestrator {
             case START_ROUND_2 -> {
                 // Request category selection for Round 2
                 gameState.setPendingCategoryRound("2");
-                sendCategories(session, 2);
+                sendCategories(session, 2, gameState);
                 stateChanged = false; // Don't change game state yet, waiting for category
             }
 
@@ -96,7 +109,7 @@ public class GameOrchestrator {
             case START_ROUND_3 -> {
                 // Request category selection for Round 3
                 gameState.setPendingCategoryRound("3");
-                sendCategories(session, 3);
+                sendCategories(session, 3, gameState);
                 stateChanged = false; // Don't change game state yet, waiting for category
             }
 
@@ -146,7 +159,11 @@ public class GameOrchestrator {
         }
 
         if (stateChanged) {
-            broadcastGameState();
+            GameStateSnapshot snapshot =
+                    GameStateMapper.toSnapshot(gameState);
+
+            persistence.save(snapshot);
+            broadcastGameState(gameState);
         }
     }
 
@@ -154,7 +171,7 @@ public class GameOrchestrator {
     // Validation helpers
     // ----------------------------
 
-    private boolean isPhaseAllowed(GameEvent event) {
+    private boolean isPhaseAllowed(GameEvent event, GameState gameState) {
         GamePhase phase = gameState.getGame().getPhase();
 
         return switch (event.getEventType()) {
@@ -168,7 +185,7 @@ public class GameOrchestrator {
         };
     }
 
-    private boolean isSenderAllowed(GameEvent event) {
+    private boolean isSenderAllowed(GameEvent event, GameState gameState) {
         boolean isTeam =
                 gameState.getTeams().containsKey(event.getSenderId());
 
@@ -205,7 +222,7 @@ public class GameOrchestrator {
     // Broadcasting
     // ----------------------------
 
-    private void broadcastGameState() {
+    private void broadcastGameState(GameState gameState) {
         try {
             Map<String, Integer> scores =
                     gameState.getTeams().values().stream()
@@ -256,7 +273,7 @@ public class GameOrchestrator {
         }
     }
 
-    private void sendCategories(WebSocketSession session, int round) {
+    private void sendCategories(WebSocketSession session, int round, GameState gameState) {
         try {
             java.util.List<String> categories = aiHost.getAvailableCategories(round);
             
