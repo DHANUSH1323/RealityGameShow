@@ -23,14 +23,26 @@ class GameEngineRound3Test {
 
         // Create a simple test AIHost
         aiHost = new AIHost() {
+
             @Override
             public Question generateQuestion(int round) {
                 return new Question("Round 3 Test Question", "Test Answer", 10);
             }
-
+        
+            @Override
+            public Question generateQuestion(int round, String category) {
+                return new Question("Round 3 Test Question", "Test Answer", 10);
+            }
+        
             @Override
             public boolean validateAnswer(Question question, String answer) {
-                return question.getCorrectAnswer().equalsIgnoreCase(answer.trim());
+                return question.getCorrectAnswer()
+                        .equalsIgnoreCase(answer.trim());
+            }
+        
+            @Override
+            public java.util.List<String> getAvailableCategories(int round) {
+                return java.util.List.of("TECH", "SCIENCE", "HISTORY", "SPORTS");
             }
         };
 

@@ -25,14 +25,26 @@ public class GameEngineRound2Test {
 
         // Create a simple test AIHost
         aiHost = new AIHost() {
+
             @Override
             public Question generateQuestion(int round) {
                 return new Question("Round 2 Test Question", "Test Answer", 5);
             }
-
+        
+            @Override
+            public Question generateQuestion(int round, String category) {
+                return new Question("Round 2 Test Question", "Test Answer", 5);
+            }
+        
             @Override
             public boolean validateAnswer(Question question, String answer) {
-                return question.getCorrectAnswer().equalsIgnoreCase(answer.trim());
+                return question.getCorrectAnswer()
+                        .equalsIgnoreCase(answer.trim());
+            }
+        
+            @Override
+            public java.util.List<String> getAvailableCategories(int round) {
+                return java.util.List.of("TECH", "SCIENCE", "HISTORY", "SPORTS");
             }
         };
 
@@ -56,12 +68,12 @@ public class GameEngineRound2Test {
         gameEngine.startRound2();
 
         //Wrong team tries to score
-        gameEngine.submitRound2Answer("T2", true, 10);
+        gameEngine.submitRound2Answer("T2", true);
         assertEquals(0, gameState.getTeams().get("T2").getScore());
         
         //Active team scores
         Question firstQuestion = gameState.getCurrentQuestion();
-        gameEngine.submitRound2Answer("T1", true, 10);
+        gameEngine.submitRound2Answer("T1", true );
         assertEquals(10, gameState.getTeams().get("T1").getScore());
         // After correct answer, a new question should be generated
         assertNotNull(gameState.getCurrentQuestion(), "New question should be generated after correct answer");
@@ -73,7 +85,7 @@ public class GameEngineRound2Test {
         gameEngine.startRound2();
         
         //Active team answers wrong
-        gameEngine.submitRound2Answer("T1", false, 10);
+        gameEngine.submitRound2Answer("T1", false);
         assertEquals(0, gameState.getTeams().get("T1").getScore());
     }
 
@@ -93,7 +105,7 @@ public class GameEngineRound2Test {
         // Force timeout
         gameState.setRound2TurnStartTime(System.currentTimeMillis() - 61_000);
 
-        gameEngine.submitRound2Answer("T1", true, 10);
+        gameEngine.submitRound2Answer("T1", true);
 
         assertEquals("T2", gameState.getActiveTeamId());
         assertEquals(0, gameState.getTeams().get("T1").getScore());
