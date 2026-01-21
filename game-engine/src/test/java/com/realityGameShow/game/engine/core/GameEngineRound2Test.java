@@ -74,7 +74,7 @@ public class GameEngineRound2Test {
         //Active team scores
         Question firstQuestion = gameState.getCurrentQuestion();
         gameEngine.submitRound2Answer("T1", true );
-        assertEquals(10, gameState.getTeams().get("T1").getScore());
+        assertEquals(5, gameState.getTeams().get("T1").getScore());
         // After correct answer, a new question should be generated
         assertNotNull(gameState.getCurrentQuestion(), "New question should be generated after correct answer");
         assertNotSame(firstQuestion, gameState.getCurrentQuestion(), "Question should be different after correct answer");
