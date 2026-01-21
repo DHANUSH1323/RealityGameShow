@@ -4,6 +4,7 @@ import com.realityGameShow.game.engine.ws.dto.GameStateSnapshot;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -21,6 +22,11 @@ public class InMemoryGameStatePersistenceService
     @Override
     public GameStateSnapshot load(String gameId) {
         return store.get(gameId);
+    }
+
+    @Override
+    public Optional<GameStateSnapshot> loadLatest() {
+        return store.values().stream().findFirst();
     }
 
     @Override

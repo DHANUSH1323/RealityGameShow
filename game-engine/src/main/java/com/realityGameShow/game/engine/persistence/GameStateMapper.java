@@ -1,41 +1,63 @@
 package com.realityGameShow.game.engine.persistence;
 
-import com.realityGameShow.game.engine.model.GameState;
-import com.realityGameShow.game.engine.model.Question;
+import com.realityGameShow.game.engine.model.*;
 import com.realityGameShow.game.engine.ws.dto.GameStateSnapshot;
 
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GameStateMapper {
 
-    public static GameStateSnapshot toSnapshot(GameState state) {
-        GameStateSnapshot s = new GameStateSnapshot();
+    public static GameStateSnapshot toSnapshot(GameState gameState) {
 
-        s.setGameId(state.getGame().getGameId());
-        s.setPhase(state.getGame().getPhase().name());
-        s.setCurrentRound(state.getGame().getCurrentRound());
-        s.setActiveTeamId(state.getActiveTeamId());
-
-        s.setTeamScores(
-                state.getTeams().values().stream()
-                        .collect(Collectors.toMap(
-                                t -> t.getTeamId(),
-                                t -> t.getScore()
-                        ))
+        Map<String, Integer> scores = new HashMap<>();
+        gameState.getTeams().forEach(
+                (id, team) -> scores.put(id, team.getScore())
         );
 
-        if (state.getCurrentQuestion() != null) {
-            s.setQuestionText(state.getCurrentQuestion().getText());
-            s.setCorrectAnswer(state.getCurrentQuestion().getCorrectAnswer());
-            s.setQuestionPoints(state.getCurrentQuestion().getPoints());
-            s.setCategory(state.getSelectedCategory());
-        }
+        Question q = gameState.getCurrentQuestion();
 
-        s.setPendingCategoryRound(state.getPendingCategoryRound());
-        s.setSelectedCategory(state.getSelectedCategory());
-
-        return s;
+        return new GameStateSnapshot(
+                gameState.getGame().getGameId(),
+                gameState.getGame().getPhase().name(),
+                gameState.getGame().getCurrentRound(),
+                gameState.getActiveTeamId(),
+                gameState.getPendingCategoryRound(),
+                gameState.getSelectedCategory(),
+                scores,
+                q != null ? q.getText() : null,
+                q != null ? q.getCorrectAnswer() : null,
+                q != null ? q.getPoints() : 0
+        );
     }
 
-    // reverse mapping comes later (recovery)
+    public static GameState fromSnapshot(GameStateSnapshot snapshot) {
+
+        Game game = new Game(snapshot.getGameId());
+        game.setPhase(GamePhase.valueOf(snapshot.getPhase()));
+        game.setCurrentRound(snapshot.getCurrentRound());
+
+        GameState gameState = new GameState(game);
+
+        snapshot.getTeamScores().forEach((id, score) -> {
+            Team team = new Team(id,"Team " + id, 0);
+            team.setScore(score);
+            gameState.addTeam(team);
+        });
+
+        gameState.setActiveTeamId(snapshot.getActiveTeamId());
+        gameState.setPendingCategoryRound(snapshot.getPendingCategoryRound());
+        gameState.setSelectedCategory(snapshot.getSelectedCategory());
+
+        if (snapshot.getQuestionText() != null) {
+            Question q = new Question(
+                    snapshot.getQuestionText(),
+                    snapshot.getCorrectAnswer(),
+                    snapshot.getQuestionPoints()
+            );
+            gameState.setCurrentQuestion(q);
+        }
+
+        return gameState;
+    }
 }

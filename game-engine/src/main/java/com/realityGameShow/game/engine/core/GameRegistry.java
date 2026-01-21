@@ -27,4 +27,8 @@ public class GameRegistry {
     public void removeGame(String gameId) {
         games.remove(gameId);
     }
+
+    public void register(GameState gameState) {
+        games.put(gameState.getGame().getGameId(), gameState);
+    }
 }
