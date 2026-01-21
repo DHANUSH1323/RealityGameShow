@@ -31,5 +31,10 @@ public enum GameEventType {
     ACTIVE_TEAM_CHANGED,
     QUESTION_PUBLISHED,
     ROUND_ENDED,
-    GAME_OVER
+    GAME_OVER,
+
+    // Session management
+    JOIN_AS_HOST,
+    JOIN_AS_TEAM,
+    JOIN_AS_VIEWER
 }
