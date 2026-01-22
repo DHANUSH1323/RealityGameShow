@@ -1,29 +1,26 @@
 // src/ws/gameSocket.ts
-import type {
-    ClientEvent,
-    ServerEvent,
-    GameStateUpdateEvent,
-    CategoriesResponseEvent,
-    ErrorEvent,
-} from "../types/events";
+import type { ClientEvent, ServerEvent } from "../types/events";
 
 type MessageHandler = (event: ServerEvent) => void;
 
 class GameSocket {
     private socket: WebSocket | null = null;
     private handlers: Set<MessageHandler> = new Set();
+    private onOpenCallback: (() => void) | null = null;
 
     /**
      * Connect to backend WebSocket
      */
-    connect(gameId: string) {
+    connect(gameId: string, onOpen?: () => void) {
         if (this.socket) return;
 
         const url = `ws://localhost:8080/ws/game?gameId=${gameId}`;
         this.socket = new WebSocket(url);
+        this.onOpenCallback = onOpen ?? null;
 
         this.socket.onopen = () => {
             console.log("WebSocket connected");
+            this.onOpenCallback?.();
         };
 
         this.socket.onmessage = (message) => {
@@ -38,6 +35,8 @@ class GameSocket {
         this.socket.onclose = () => {
             console.log("WebSocket disconnected");
             this.socket = null;
+            this.handlers.clear();
+            this.onOpenCallback = null;
         };
 
         this.socket.onerror = (err) => {
@@ -87,8 +86,8 @@ class GameSocket {
         this.socket?.close();
         this.socket = null;
         this.handlers.clear();
+        this.onOpenCallback = null;
     }
 }
 
-// Export singleton
 export const gameSocket = new GameSocket();

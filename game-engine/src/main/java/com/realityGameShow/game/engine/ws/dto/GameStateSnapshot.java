@@ -137,6 +137,10 @@ public class GameStateSnapshot {
     private String correctAnswer;
     private int questionPoints;
 
+    // ✅ NEW: timestamps for frontend timer display
+    private Long round2TurnStartTime;
+    private Long round3QuestionStartTime;
+
     public GameStateSnapshot(
             String gameId,
             String phase,
@@ -147,7 +151,9 @@ public class GameStateSnapshot {
             Map<String, Integer> teamScores,
             String questionText,
             String correctAnswer,
-            int questionPoints
+            int questionPoints,
+            Long round2TurnStartTime,
+            Long round3QuestionStartTime
     ) {
         this.gameId = gameId;
         this.phase = phase;
@@ -159,6 +165,8 @@ public class GameStateSnapshot {
         this.questionText = questionText;
         this.correctAnswer = correctAnswer;
         this.questionPoints = questionPoints;
+        this.round2TurnStartTime = round2TurnStartTime;
+        this.round3QuestionStartTime = round3QuestionStartTime;
     }
 
     public String getGameId() { return gameId; }
@@ -171,4 +179,7 @@ public class GameStateSnapshot {
     public String getQuestionText() { return questionText; }
     public String getCorrectAnswer() { return correctAnswer; }
     public int getQuestionPoints() { return questionPoints; }
+
+    public Long getRound2TurnStartTime() { return round2TurnStartTime; }
+    public Long getRound3QuestionStartTime() { return round3QuestionStartTime; }
 }

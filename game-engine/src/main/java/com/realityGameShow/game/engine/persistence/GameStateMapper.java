@@ -27,7 +27,9 @@ public class GameStateMapper {
                 scores,
                 q != null ? q.getText() : null,
                 q != null ? q.getCorrectAnswer() : null,
-                q != null ? q.getPoints() : 0
+                q != null ? q.getPoints() : 0,
+                gameState.getRound2TurnStartTime(),
+                gameState.getRound3QuestionStartTime()
         );
     }
 
@@ -40,7 +42,7 @@ public class GameStateMapper {
         GameState gameState = new GameState(game);
 
         snapshot.getTeamScores().forEach((id, score) -> {
-            Team team = new Team(id,"Team " + id, 0);
+            Team team = new Team(id, "Team " + id, 0);
             team.setScore(score);
             gameState.addTeam(team);
         });

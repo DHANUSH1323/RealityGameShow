@@ -31,7 +31,9 @@ public class GameStatePersistenceTest {
                         Map.of("team-1", 10, "team-2", 0),
                         "What is JVM?",
                         "Java Virtual Machine",
-                        10
+                        10,
+                        null,
+                        null 
                 );
 
         persistence.save(snapshot);
@@ -103,7 +105,9 @@ public class GameStatePersistenceTest {
                         Map.of("team-1", 0),
                         null,
                         null,
-                        0
+                        0,
+                        null,
+                        null
                 );
 
         persistence.save(snapshot);
